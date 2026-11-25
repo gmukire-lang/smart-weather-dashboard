@@ -1,0 +1,82 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          weatherwise
+# Required-Start:    $remote_fs $network
+# Required-Stop:     $remote_fs $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Weatherwise (Express server)
+# Description:       Runs the Weatherwise Express server as the www-data user.
+### END INIT INFO
+
+# Weatherwise: init script (for servers that use "service", not systemd)
+# Installed by deploy/deploy.sh to /etc/init.d/weatherwise
+#
+#   sudo service weatherwise start | stop | restart | status
+#   sudo tail -f /var/log/weatherwise.log        live logs
+
+NAME=weatherwise
+APP_DIR=/var/www/weatherwise
+RUN_AS=www-data
+PIDFILE=/var/run/$NAME.pid
+LOGFILE=/var/log/$NAME.log
+NODE="$(command -v node || echo /usr/bin/node)"
+
+is_running() {
+  [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null
+}
+
+start() {
+  if is_running; then
+    echo "$NAME is already running (pid $(cat "$PIDFILE"))"
+    return 0
+  fi
+  if [ ! -x "$NODE" ]; then
+    echo "Node.js was not found. Install it first." >&2
+    return 1
+  fi
+  touch "$LOGFILE" && chown "$RUN_AS" "$LOGFILE"
+  echo "Starting $NAME"
+  # The server reads its settings and any API key from $APP_DIR/.env (see server.js).
+  start-stop-daemon --start --quiet --background \
+    --make-pidfile --pidfile "$PIDFILE" \
+    --chuid "$RUN_AS" --chdir "$APP_DIR" \
+    --startas /bin/sh -- -c "NODE_ENV=production exec $NODE server.js >> $LOGFILE 2>&1"
+  sleep 1
+  if is_running; then
+    echo "$NAME started (pid $(cat "$PIDFILE"))"
+  else
+    echo "$NAME failed to start. Last log lines:" >&2
+    tail -n 15 "$LOGFILE" >&2
+    return 1
+  fi
+}
+
+stop() {
+  if ! is_running; then
+    echo "$NAME is not running"
+    rm -f "$PIDFILE"
+    return 0
+  fi
+  echo "Stopping $NAME"
+  start-stop-daemon --stop --quiet --retry TERM/5/KILL/3 --pidfile "$PIDFILE"
+  rm -f "$PIDFILE"
+}
+
+case "$1" in
+  start)   start ;;
+  stop)    stop ;;
+  restart) stop; start ;;
+  status)
+    if is_running; then
+      echo "$NAME is running (pid $(cat "$PIDFILE"))"
+    else
+      echo "$NAME is not running"
+      exit 3
+    fi
+    ;;
+  *)
+    echo "Usage: service $NAME {start|stop|restart|status}" >&2
+    exit 1
+    ;;
+esac
