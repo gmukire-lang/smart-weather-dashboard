@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weatherwise | Smart Weather Dashboard</title>
+  <meta name="description" content="Weatherwise helps you decide when to do things outdoors: search any city, see the forecast, and find the best time this week to run, cycle, farm, dry laundry or hold an event.">
+  <meta name="theme-color" content="#F3EEE4">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+
+  <link rel="stylesheet" href="assets/vendor/fontawesome/css/fontawesome.min.css">
+  <link rel="stylesheet" href="assets/vendor/fontawesome/css/solid.min.css">
+  <link rel="stylesheet" href="assets/vendor/fontawesome/css/regular.min.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/scene.css">
+  <link rel="stylesheet" href="css/components.css">
+
+  <!-- Applies the saved theme before first paint (kept in a file so a strict CSP can be used). -->
+  <script src="js/theme-init.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="banner banner--offline" id="offline-banner" role="status" hidden>
+    <i class="fa-solid fa-plug-circle-xmark" aria-hidden="true"></i>
+    <span>You’re offline. Showing the last weather we saved, it will refresh when you reconnect.</span>
+  </div>
+
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="./" aria-label="Weatherwise home">
+        <span class="brand__mark" aria-hidden="true"><i class="fa-solid fa-sun"></i></span>
+        <span class="brand__name">Weatherwise</span>
+      </a>
+
+      <div class="search" id="search" role="search">
+        <label class="visually-hidden" for="search-input">Search for a city</label>
+        <i class="fa-solid fa-magnifying-glass search__icon" aria-hidden="true"></i>
+        <input id="search-input" class="search__input" type="text" inputmode="search" enterkeyhint="search"
+               placeholder="Search for a city…" autocomplete="off" autocapitalize="off" spellcheck="false"
+               role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-list">
+        <kbd class="search__hint" aria-hidden="true">/</kbd>
+        <button class="search__clear" id="search-clear" type="button" aria-label="Clear search" hidden>
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+        <div class="search__panel" id="search-panel" hidden>
+          <p class="search__status" id="search-status" role="status"></p>
+          <ul class="search__list" id="search-list" role="listbox" aria-label="City suggestions"></ul>
+        </div>
+      </div>
+
+      <div class="topbar__actions">
+        <button class="icon-btn" id="btn-locate" type="button" aria-label="Use my location" title="Use my location">
+          <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
+        </button>
+        <div class="segmented segmented--compact" role="group" aria-label="Temperature unit" id="unit-toggle">
+          <button type="button" data-unit="c" aria-pressed="true">°C</button>
+          <button type="button" data-unit="f" aria-pressed="false">°F</button>
+        </div>
+        <button class="icon-btn" id="btn-settings" type="button" aria-label="Display settings" title="Display settings" aria-haspopup="dialog">
+          <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="page" tabindex="-1">
+
+    <div class="banner banner--stale" id="stale-banner" role="status" hidden>
+      <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+      <span id="stale-text"></span>
+      <button class="btn btn--small" id="stale-retry" type="button">
+        <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Try again
+      </button>
+    </div>
+
+    <!-- Full-page failure state: shown only when there is no data at all to display -->
+    <section class="fatal" id="fatal" hidden aria-live="assertive">
+      <span class="fatal__icon" aria-hidden="true"><i class="fa-solid fa-cloud-bolt" id="fatal-icon"></i></span>
+      <h1 class="fatal__title" id="fatal-title">We couldn’t load the weather</h1>
+      <p class="fatal__text" id="fatal-text"></p>
+      <div class="fatal__actions">
+        <button class="btn btn--primary" id="fatal-retry" type="button">
+          <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Try again
+        </button>
+        <button class="btn" id="fatal-search" type="button">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search another city
+        </button>
+      </div>
+    </section>
+
+    <div id="dashboard" class="dashboard is-loading" aria-busy="true">
+
+      <!-- ── Now: scenery + smart brief ─────────────────────────── -->
+      <section class="hero" aria-labelledby="place-name">
+        <article class="scene-card" id="scene-card">
+          <div class="scene" id="scene" data-mood="clear-day" aria-hidden="true">
+            <div class="scene__stars" id="scene-stars"></div>
+            <div class="scene__orb" id="scene-orb">
+              <span class="scene__halo"></span>
+              <span class="scene__rays"></span>
+              <span class="scene__disc"></span>
+            </div>
+            <div class="scene__bank"></div>
+            <div class="scene__clouds" id="scene-clouds"></div>
+            <div class="scene__land" id="scene-land"></div>
+            <div class="scene__fog"><span></span><span></span><span></span></div>
+            <canvas class="scene__precip" id="scene-precip"></canvas>
+            <div class="scene__flash" id="scene-flash"></div>
+          </div>
+
+          <div class="now">
+            <div class="now__top">
+              <div class="now__place">
+                <h1 class="now__city" id="place-name"><span class="skeleton skeleton--text" style="width:9ch"></span></h1>
+                <p class="now__meta" id="place-meta"><span class="skeleton skeleton--text" style="width:22ch"></span></p>
+              </div>
+              <div class="now__tools">
+                <button class="chip-btn" id="btn-save" type="button" aria-pressed="false">
+                  <i class="fa-regular fa-star" aria-hidden="true"></i><span>Save city</span>
+                </button>
+                <button class="chip-btn chip-btn--icon" id="btn-refresh" type="button" aria-label="Refresh weather" title="Refresh weather">
+                  <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="now__reading" aria-live="polite">
+              <p class="now__temp" id="now-temp"><span class="skeleton skeleton--block" style="width:2.2ch;height:.8em"></span></p>
+              <div class="now__cond">
+                <p class="now__label" id="now-label"><span class="skeleton skeleton--text" style="width:12ch"></span></p>
+                <p class="now__sub" id="now-sub"><span class="skeleton skeleton--text" style="width:18ch"></span></p>
+              </div>
+            </div>
+
+            <p class="now__headline" id="now-headline" hidden></p>
+          </div>
+        </article>
+
+        <aside class="card brief" aria-labelledby="brief-title">
+          <header class="card__head">
+            <div>
+              <h2 class="card__title" id="brief-title">Today’s brief</h2>
+              <p class="card__sub">What the forecast means for your day</p>
+            </div>
+            <span class="card__badge"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Smart</span>
+          </header>
+          <ul class="brief__list" id="brief-list">
+            <li class="skeleton skeleton--row"></li>
+            <li class="skeleton skeleton--row"></li>
+            <li class="skeleton skeleton--row"></li>
+            <li class="skeleton skeleton--row"></li>
+          </ul>
+          <div class="brief__activities">
+            <h3 class="eyebrow">Good for, over the next 12 hours</h3>
+            <ul class="activity-list" id="activity-list"></ul>
+          </div>
+        </aside>
+      </section>
+
+      <!-- ── Planner: when should I do it? ──────────────────────── -->
+      <section class="card planner" aria-labelledby="planner-title">
+        <header class="card__head card__head--wrap">
+          <div>
+            <h2 class="card__title" id="planner-title">Plan your week</h2>
+            <p class="card__sub" id="planner-sub">Pick an activity to find the best time for it in the next 7 days</p>
+          </div>
+          <div class="card__controls">
+            <div class="segmented" role="group" aria-label="How long the activity takes" id="planner-length">
+              <button type="button" data-hours="1" aria-pressed="false">1 h</button>
+              <button type="button" data-hours="2" aria-pressed="true">2 h</button>
+              <button type="button" data-hours="3" aria-pressed="false">3 h</button>
+              <button type="button" data-hours="4" aria-pressed="false">4 h</button>
+            </div>
+            <label class="select">
+              <span class="select__label"><i class="fa-solid fa-arrow-down-wide-short" aria-hidden="true"></i> Sort</span>
+              <select id="planner-sort" aria-label="Sort time slots">
+                <option value="best">Best first</option>
+                <option value="soon">Soonest first</option>
+              </select>
+            </label>
+          </div>
+        </header>
+        <div class="chips" role="group" aria-label="Activity" id="planner-activity">
+          <button type="button" class="chip" data-activity="run" aria-pressed="true"><i class="fa-solid fa-person-running" aria-hidden="true"></i> Running</button>
+          <button type="button" class="chip" data-activity="cycle" aria-pressed="false"><i class="fa-solid fa-person-biking" aria-hidden="true"></i> Cycling</button>
+          <button type="button" class="chip" data-activity="event" aria-pressed="false"><i class="fa-solid fa-champagne-glasses" aria-hidden="true"></i> Outdoor event</button>
+          <button type="button" class="chip" data-activity="farm" aria-pressed="false"><i class="fa-solid fa-seedling" aria-hidden="true"></i> Farm &amp; garden work</button>
+          <button type="button" class="chip" data-activity="laundry" aria-pressed="false"><i class="fa-solid fa-shirt" aria-hidden="true"></i> Drying laundry</button>
+          <button type="button" class="chip" data-activity="stars" aria-pressed="false"><i class="fa-solid fa-star" aria-hidden="true"></i> Stargazing</button>
+          <button type="button" class="chip chip--toggle" id="planner-good" aria-pressed="false"><i class="fa-solid fa-filter" aria-hidden="true"></i> Good slots only</button>
+        </div>
+        <div id="planner-body"><div class="skeleton" style="height:220px"></div></div>
+      </section>
+
+      <!-- ── Hourly ─────────────────────────────────────────────── -->
+      <section class="card hourly" aria-labelledby="hourly-title">
+        <header class="card__head card__head--wrap">
+          <div>
+            <h2 class="card__title" id="hourly-title">Hourly forecast</h2>
+            <p class="card__sub" id="hourly-sub">Next 24 hours</p>
+          </div>
+          <div class="card__controls">
+            <div class="segmented" role="group" aria-label="Chart measure" id="metric-tabs">
+              <button type="button" data-metric="temp" aria-label="Temperature" aria-pressed="true"><i class="fa-solid fa-temperature-half" aria-hidden="true"></i><span>Temperature</span></button>
+              <button type="button" data-metric="rain" aria-label="Rain chance" aria-pressed="false"><i class="fa-solid fa-droplet" aria-hidden="true"></i><span>Rain chance</span></button>
+              <button type="button" data-metric="wind" aria-label="Wind" aria-pressed="false"><i class="fa-solid fa-wind" aria-hidden="true"></i><span>Wind</span></button>
+              <button type="button" data-metric="uv" aria-label="UV index" aria-pressed="false"><i class="fa-solid fa-sun" aria-hidden="true"></i><span>UV</span></button>
+            </div>
+            <button class="btn btn--small" id="btn-table" type="button" aria-pressed="false">
+              <i class="fa-solid fa-table-list" aria-hidden="true"></i> <span>Table</span>
+            </button>
+          </div>
+        </header>
+        <div class="chart" id="chart" tabindex="0" role="group" aria-label="Hourly chart. Use the left and right arrow keys to read each hour."></div>
+        <div class="table-wrap" id="hourly-table-wrap" hidden></div>
+      </section>
+
+      <!-- ── Conditions ─────────────────────────────────────────── -->
+      <section aria-labelledby="conditions-title">
+        <div class="section-head">
+          <h2 class="section-title" id="conditions-title">Current conditions</h2>
+          <p class="section-sub" id="conditions-sub"></p>
+        </div>
+        <div class="tiles" id="tiles">
+          <div class="tile skeleton"></div><div class="tile skeleton"></div>
+          <div class="tile skeleton"></div><div class="tile skeleton"></div>
+          <div class="tile skeleton"></div><div class="tile skeleton"></div>
+          <div class="tile skeleton"></div><div class="tile skeleton"></div>
+        </div>
+      </section>
+
+      <!-- ── Daily forecast + air quality ───────────────────────── -->
+      <div class="split">
+        <section class="card daily" aria-labelledby="daily-title">
+          <header class="card__head card__head--wrap">
+            <div>
+              <h2 class="card__title" id="daily-title">10-day forecast</h2>
+              <p class="card__sub" id="daily-sub">Pick a day to see its hours in the chart above</p>
+            </div>
+            <div class="card__controls">
+              <label class="select">
+                <span class="select__label"><i class="fa-solid fa-arrow-down-wide-short" aria-hidden="true"></i> Sort</span>
+                <select id="daily-sort" aria-label="Sort days">
+                  <option value="date">By date</option>
+                  <option value="warm">Warmest first</option>
+                  <option value="cool">Coolest first</option>
+                  <option value="wet">Wettest first</option>
+                  <option value="wind">Windiest first</option>
+                  <option value="uv">Highest UV first</option>
+                </select>
+              </label>
+            </div>
+          </header>
+          <div class="chips" role="group" aria-label="Filter days" id="daily-filter">
+            <button type="button" class="chip" data-filter="all" aria-pressed="true">All days</button>
+            <button type="button" class="chip" data-filter="dry" aria-pressed="false"><i class="fa-solid fa-sun" aria-hidden="true"></i> Dry</button>
+            <button type="button" class="chip" data-filter="wet" aria-pressed="false"><i class="fa-solid fa-umbrella" aria-hidden="true"></i> Rainy</button>
+            <button type="button" class="chip" data-filter="weekend" aria-pressed="false"><i class="fa-regular fa-calendar" aria-hidden="true"></i> Weekend</button>
+          </div>
+          <ol class="day-list" id="day-list"></ol>
+        </section>
+
+        <section class="card air" aria-labelledby="air-title">
+          <header class="card__head">
+            <div>
+              <h2 class="card__title" id="air-title">Air quality</h2>
+              <p class="card__sub" id="air-sub">US AQI, right now</p>
+            </div>
+          </header>
+          <div id="air-body"></div>
+        </section>
+      </div>
+
+      <!-- ── Saved cities ───────────────────────────────────────── -->
+      <section class="card cities" aria-labelledby="cities-title">
+        <header class="card__head card__head--wrap">
+          <div>
+            <h2 class="card__title" id="cities-title">My cities</h2>
+            <p class="card__sub" id="cities-sub">Compare the places you care about</p>
+          </div>
+          <div class="card__controls">
+            <label class="field">
+              <i class="fa-solid fa-filter" aria-hidden="true"></i>
+              <span class="visually-hidden">Filter saved cities by name</span>
+              <input type="text" id="cities-query" placeholder="Filter by name…" autocomplete="off" spellcheck="false">
+            </label>
+            <label class="select">
+              <span class="select__label"><i class="fa-solid fa-arrow-down-wide-short" aria-hidden="true"></i> Sort</span>
+              <select id="cities-sort" aria-label="Sort saved cities">
+                <option value="added">Recently added</option>
+                <option value="name">Name A–Z</option>
+                <option value="warm">Warmest first</option>
+                <option value="cool">Coolest first</option>
+                <option value="humid">Most humid first</option>
+                <option value="wind">Windiest first</option>
+              </select>
+            </label>
+          </div>
+        </header>
+        <div class="chips" role="group" aria-label="Filter saved cities by weather" id="cities-filter">
+          <button type="button" class="chip" data-filter="all" aria-pressed="true">All</button>
+          <button type="button" class="chip" data-filter="clear" aria-pressed="false"><i class="fa-solid fa-sun" aria-hidden="true"></i> Clear</button>
+          <button type="button" class="chip" data-filter="cloudy" aria-pressed="false"><i class="fa-solid fa-cloud" aria-hidden="true"></i> Cloudy</button>
+          <button type="button" class="chip" data-filter="wet" aria-pressed="false"><i class="fa-solid fa-cloud-rain" aria-hidden="true"></i> Rain or snow</button>
+        </div>
+        <div id="cities-body"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>
+      Weather, air-quality and city search data by
+      <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0).
+      Location lookup by <a href="https://www.bigdatacloud.com/" target="_blank" rel="noopener">BigDataCloud</a>.
+      Icons by <a href="https://fontawesome.com/" target="_blank" rel="noopener">Font Awesome</a>.
+    </p>
+    <p class="footer__meta" id="footer-meta"></p>
+  </footer>
+
+  <!-- ── Settings ───────────────────────────────────────────────── -->
+  <dialog class="dialog" id="settings-dialog" aria-labelledby="settings-title">
+    <form method="dialog" class="dialog__inner">
+      <header class="dialog__head">
+        <h2 class="card__title" id="settings-title">Display settings</h2>
+        <button class="icon-btn icon-btn--plain" type="submit" aria-label="Close settings">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+
+      <fieldset class="setting">
+        <legend>Temperature</legend>
+        <div class="segmented segmented--full" data-setting="temp">
+          <button type="button" data-value="c">Celsius (°C)</button>
+          <button type="button" data-value="f">Fahrenheit (°F)</button>
+        </div>
+      </fieldset>
+      <fieldset class="setting">
+        <legend>Wind speed</legend>
+        <div class="segmented segmented--full" data-setting="wind">
+          <button type="button" data-value="kmh">km/h</button>
+          <button type="button" data-value="mph">mph</button>
+          <button type="button" data-value="ms">m/s</button>
+        </div>
+      </fieldset>
+      <fieldset class="setting">
+        <legend>Clock</legend>
+        <div class="segmented segmented--full" data-setting="clock">
+          <button type="button" data-value="24">24-hour</button>
+          <button type="button" data-value="12">12-hour</button>
+        </div>
+      </fieldset>
+      <fieldset class="setting">
+        <legend>Theme</legend>
+        <div class="segmented segmented--full" data-setting="theme">
+          <button type="button" data-value="auto"><i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i> Auto</button>
+          <button type="button" data-value="light"><i class="fa-solid fa-sun" aria-hidden="true"></i> Light</button>
+          <button type="button" data-value="dark"><i class="fa-solid fa-moon" aria-hidden="true"></i> Dark</button>
+        </div>
+      </fieldset>
+      <fieldset class="setting">
+        <legend>Scenery animation</legend>
+        <div class="segmented segmented--full" data-setting="motion">
+          <button type="button" data-value="on">On</button>
+          <button type="button" data-value="off">Off</button>
+        </div>
+      </fieldset>
+      <p class="dialog__note">Your choices are saved in this browser only.</p>
+    </form>
+  </dialog>
+
+  <div class="toasts" id="toasts" role="region" aria-label="Notifications" aria-live="polite"></div>
+
+  <script src="js/config.js" defer></script>
+  <script src="js/utils.js" defer></script>
+  <script src="js/codes.js" defer></script>
+  <script src="js/store.js" defer></script>
+  <script src="js/api.js" defer></script>
+  <script src="js/insights.js" defer></script>
+  <script src="js/scene.js" defer></script>
+  <script src="js/chart.js" defer></script>
+  <script src="js/search.js" defer></script>
+  <script src="js/render.js" defer></script>
+  <script src="js/planner.js" defer></script>
+  <script src="js/cities.js" defer></script>
+  <script src="js/app.js" defer></script>
+</body>
+</html>
