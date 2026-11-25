@@ -39,7 +39,7 @@
 | Load balancer, direct (Lb01) | <http://35.179.171.101> |
 | Web server 1, direct (Web01) | <http://18.132.10.131> |
 | Web server 2, direct (Web02) | <http://13.43.219.124> |
-| **Demo video** | `<link>` &nbsp; _fill in_ |
+| **Demo video** | <https://youtu.be/cxfijRor0g0> |
 
 <br>
 
