@@ -1,12 +1,3 @@
-/* ==========================================================================
-   Weatherwise: activity planner
-   The purpose of the app in one feature: "WHEN should I do it?"
-   Pick an activity and how long it takes; the planner scores every possible
-   time slot in the next 7 days against what that activity needs (temperature,
-   rain, wind, sun, humidity, daylight or darkness) and shows the best slot of
-   each day, with the reasons. Results can be sorted and filtered.
-   ========================================================================== */
-
 WW.planner = (function () {
   "use strict";
 
@@ -16,10 +7,6 @@ WW.planner = (function () {
   var bound = false, lastState = null;
 
   function n(v, fallback) { return U.isNum(v) ? v : (fallback || 0); }
-
-  /* ── What each activity needs ───────────────────────────────────────────
-     score(hour) returns 0–100 for one hour. "when" limits which hours count:
-     "day" = daylight only, "night" = darkness only, "waking" = 06:00–22:00. */
 
   function comfortScore(ideal, w) {
     return function (h) {
@@ -82,8 +69,6 @@ WW.planner = (function () {
     return { label: "Poor", color: "var(--s-high)" };
   }
 
-  /* ── Finding the best slot of each day ──────────────────────────────── */
-
   function plan(f) {
     var activity = ACTIVITIES[view.activity], len = view.hours;
     var hours = f.hourly.slice(f.nowIndex, f.nowIndex + 7 * 24);
@@ -102,7 +87,6 @@ WW.planner = (function () {
       }
       if (!ok) continue;
 
-      // One bad hour spoils a slot, so the worst hour counts as well as the average.
       var score = Math.round(sum / len * 0.7 + worst * 0.3);
       var dayKey = new Date(slot[0].time).toISOString().slice(0, 10);
       if (!bestByDay[dayKey] || score > bestByDay[dayKey].score) {
@@ -119,8 +103,6 @@ WW.planner = (function () {
     }
     return Object.keys(bestByDay).map(function (k) { return bestByDay[k]; });
   }
-
-  /* ── Render ─────────────────────────────────────────────────────────── */
 
   function dayName(f, time) {
     var today = f.days[0].time;

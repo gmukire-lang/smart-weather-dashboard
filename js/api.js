@@ -1,23 +1,8 @@
-/* ==========================================================================
-   Weatherwise: API layer
-   All network access goes through request(), which adds:
-     • a timeout (a hung request never leaves the page spinning forever)
-     • automatic retries with back-off for network errors and 5xx responses
-     • one error type (ApiError) with a "kind" the UI can explain to people
-     • validation, so a malformed response is caught here and not in the UI
-
-   APIs used (none requires a key):
-     Open-Meteo Forecast, Geocoding and Air Quality, https://open-meteo.com
-     BigDataCloud reverse geocoding, https://www.bigdatacloud.com
-   ========================================================================== */
-
 WW.api = (function () {
   "use strict";
 
   var cfg = WW.config;
   var U = WW.utils;
-
-  /* ── Errors ─────────────────────────────────────────────────────────── */
 
   function ApiError(kind, message, extra) {
     this.name = "ApiError";
@@ -62,15 +47,10 @@ WW.api = (function () {
     }
   };
 
-  /** Turn any error into { icon, title, text } written for people, not developers. */
   function explain(error) {
     var kind = error && error.kind;
     return MESSAGES[kind] || MESSAGES.network;
   }
-
-  /* ── Failure simulation, for testing and for the demo video ──────────
-     Add ?fail=forecast (or air, search, cities, locate, all) to the URL to
-     make that call fail on purpose, e.g. index.html?fail=air             */
 
   var simulated = (function () {
     try {
@@ -82,8 +62,6 @@ WW.api = (function () {
   function shouldFail(source) {
     return simulated.indexOf("all") >= 0 || simulated.indexOf(source) >= 0;
   }
-
-  /* ── Core request ───────────────────────────────────────────────────── */
 
   function delay(ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }
 
@@ -113,7 +91,7 @@ WW.api = (function () {
 
       if (!response.ok) {
         var reason = "";
-        try { reason = (await response.json()).reason || ""; } catch (e) { /* body was not JSON */ }
+        try { reason = (await response.json()).reason || ""; } catch (e) {}
         var extra = { status: response.status, source: options.source };
         if (response.status === 429) throw new ApiError("rate", reason, extra);
         if (response.status >= 500) throw new ApiError("server", reason, extra);
@@ -152,13 +130,11 @@ WW.api = (function () {
       } catch (err) {
         var canRetry = err instanceof ApiError && RETRYABLE[err.kind] && tryNo < options.retries;
         if (!canRetry) throw err;
-        await delay(400 * Math.pow(3, tryNo)); // 0.4 s, then 1.2 s
+        await delay(400 * Math.pow(3, tryNo));
         if (options.signal && options.signal.aborted) throw abortError();
       }
     }
   }
-
-  /* ── City search (Open-Meteo Geocoding) ─────────────────────────────── */
 
   async function searchCities(query, signal) {
     var wanted = query.trim().toLowerCase();
@@ -177,14 +153,11 @@ WW.api = (function () {
           population: r.population || 0
         };
       })
-      // Most people mean the big city: exact name matches first, then by population.
       .sort(function (a, b) {
         var exactA = a.name.toLowerCase() === wanted ? 1 : 0, exactB = b.name.toLowerCase() === wanted ? 1 : 0;
         return exactB - exactA || b.population - a.population;
       });
   }
-
-  /* ── Forecast (Open-Meteo Forecast) ─────────────────────────────────── */
 
   var CURRENT = ["temperature_2m", "relative_humidity_2m", "apparent_temperature", "is_day", "precipitation",
     "weather_code", "cloud_cover", "pressure_msl", "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m"];
@@ -272,8 +245,6 @@ WW.api = (function () {
     return normalizeForecast(raw, place);
   }
 
-  /* ── Air quality (Open-Meteo Air Quality) ───────────────────────────── */
-
   async function getAirQuality(place, signal) {
     var raw = await request(buildUrl(cfg.api.airQuality, {
       latitude: place.lat, longitude: place.lon,
@@ -301,8 +272,6 @@ WW.api = (function () {
     };
   }
 
-  /* ── Snapshot for several cities in ONE request ─────────────────────── */
-
   async function getCitiesSnapshot(places, signal) {
     if (!places.length) return {};
     var raw = await request(buildUrl(cfg.api.forecast, {
@@ -317,7 +286,7 @@ WW.api = (function () {
     var out = {};
     places.forEach(function (place, i) {
       var row = list[i], C = row && row.current;
-      if (!C || !U.isNum(C.temperature_2m)) return; // leave this city without data; the card says so
+      if (!C || !U.isNum(C.temperature_2m)) return;
       out[U.placeId(place)] = {
         temp: C.temperature_2m, feels: C.apparent_temperature, humidity: C.relative_humidity_2m,
         code: C.weather_code, isDay: C.is_day !== 0, wind: C.wind_speed_10m,
@@ -328,8 +297,6 @@ WW.api = (function () {
     if (!Object.keys(out).length) throw new ApiError("invalid", "No city data returned", { source: "cities" });
     return out;
   }
-
-  /* ── Location (browser geolocation + BigDataCloud) ──────────────────── */
 
   function toPlace(data, fallbackName) {
     if (!data || !U.isNum(data.latitude) || !U.isNum(data.longitude)) {
@@ -344,7 +311,6 @@ WW.api = (function () {
     };
   }
 
-  /** Coordinates → place name. */
   async function reverseGeocode(lat, lon, signal) {
     var data = await request(buildUrl(cfg.api.reverse, {
       latitude: lat, longitude: lon, localityLanguage: "en"
@@ -354,7 +320,6 @@ WW.api = (function () {
     return place;
   }
 
-  /** Rough location from the network address, no permission prompt. Used once, on a first visit. */
   async function approximateLocation(signal) {
     var data = await request(buildUrl(cfg.api.reverse, { localityLanguage: "en" }),
       { source: "locate", signal: signal, retries: 0, timeout: 4000 });
@@ -369,7 +334,6 @@ WW.api = (function () {
     timeout: "Finding your location took too long. Try again, or search for your city."
   };
 
-  /** Ask the browser for the device position. Rejects with { geo: reason, message }. */
   function devicePosition() {
     return new Promise(function (resolve, reject) {
       function fail(reason) { reject({ geo: reason, message: GEO_MESSAGES[reason] }); }

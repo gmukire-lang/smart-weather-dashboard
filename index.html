@@ -15,7 +15,6 @@
   <link rel="stylesheet" href="css/scene.css">
   <link rel="stylesheet" href="css/components.css">
 
-  <!-- Applies the saved theme before first paint (kept in a file so a strict CSP can be used). -->
   <script src="js/theme-init.js"></script>
 </head>
 <body>
@@ -74,7 +73,6 @@
       </button>
     </div>
 
-    <!-- Full-page failure state: shown only when there is no data at all to display -->
     <section class="fatal" id="fatal" hidden aria-live="assertive">
       <span class="fatal__icon" aria-hidden="true"><i class="fa-solid fa-cloud-bolt" id="fatal-icon"></i></span>
       <h1 class="fatal__title" id="fatal-title">We couldn’t load the weather</h1>
@@ -91,7 +89,6 @@
 
     <div id="dashboard" class="dashboard is-loading" aria-busy="true">
 
-      <!-- ── Now: scenery + smart brief ─────────────────────────── -->
       <section class="hero" aria-labelledby="place-name">
         <article class="scene-card" id="scene-card">
           <div class="scene" id="scene" data-mood="clear-day" aria-hidden="true">
@@ -158,7 +155,6 @@
         </aside>
       </section>
 
-      <!-- ── Planner: when should I do it? ──────────────────────── -->
       <section class="card planner" aria-labelledby="planner-title">
         <header class="card__head card__head--wrap">
           <div>
@@ -193,7 +189,6 @@
         <div id="planner-body"><div class="skeleton" style="height:220px"></div></div>
       </section>
 
-      <!-- ── Hourly ─────────────────────────────────────────────── -->
       <section class="card hourly" aria-labelledby="hourly-title">
         <header class="card__head card__head--wrap">
           <div>
@@ -216,7 +211,6 @@
         <div class="table-wrap" id="hourly-table-wrap" hidden></div>
       </section>
 
-      <!-- ── Conditions ─────────────────────────────────────────── -->
       <section aria-labelledby="conditions-title">
         <div class="section-head">
           <h2 class="section-title" id="conditions-title">Current conditions</h2>
@@ -230,7 +224,6 @@
         </div>
       </section>
 
-      <!-- ── Daily forecast + air quality ───────────────────────── -->
       <div class="split">
         <section class="card daily" aria-labelledby="daily-title">
           <header class="card__head card__head--wrap">
@@ -272,7 +265,6 @@
         </section>
       </div>
 
-      <!-- ── Saved cities ───────────────────────────────────────── -->
       <section class="card cities" aria-labelledby="cities-title">
         <header class="card__head card__head--wrap">
           <div>
@@ -319,7 +311,6 @@
     <p class="footer__meta" id="footer-meta"></p>
   </footer>
 
-  <!-- ── Settings ───────────────────────────────────────────────── -->
   <dialog class="dialog" id="settings-dialog" aria-labelledby="settings-title">
     <form method="dialog" class="dialog__inner">
       <header class="dialog__head">

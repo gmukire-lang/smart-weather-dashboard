@@ -1,10 +1,3 @@
-/* ==========================================================================
-   Weatherwise: local storage
-   Preferences, saved cities, recent searches and the last good forecast are
-   kept in this browser only. Everything is wrapped in try/catch because
-   storage can be blocked (private mode) or full.
-   ========================================================================== */
-
 WW.store = (function () {
   "use strict";
 
@@ -40,8 +33,6 @@ WW.store = (function () {
     }
   }
 
-  /* ── Settings ───────────────────────────────────────────────────────── */
-
   function loadSettings() {
     var saved = read(KEYS.settings, {}) || {};
     var out = {};
@@ -58,8 +49,6 @@ WW.store = (function () {
     settings[key] = value;
     write(KEYS.settings, settings);
   }
-
-  /* ── Places ─────────────────────────────────────────────────────────── */
 
   function cleanPlace(p) {
     if (!p || typeof p.lat !== "number" || typeof p.lon !== "number" || !p.name) return null;
@@ -78,14 +67,12 @@ WW.store = (function () {
   function getCities() {
     var saved = read(KEYS.cities, null);
     if (saved == null) {
-      // First visit: start with a small set so the comparison board is useful straight away.
       saved = WW.config.starterCities;
       write(KEYS.cities, saved);
     }
     return cleanList(saved);
   }
 
-  /** The saved city that is the same place as this one (same name, within ~10 km), if any. */
   function matchSaved(place) {
     var id = WW.utils.placeId(place);
     return getCities().find(function (c) {
@@ -99,7 +86,6 @@ WW.store = (function () {
     return getCities().some(function (c) { return c.id === id; });
   }
 
-  /** Returns "added", "exists" or "full". */
   function addCity(place) {
     var clean = cleanPlace(place);
     if (!clean) return "exists";
@@ -141,8 +127,6 @@ WW.store = (function () {
   function getLast() { return cleanPlace(read(KEYS.last, null)); }
   function setLast(place) { write(KEYS.last, cleanPlace(place)); }
 
-  /* ── Forecast cache (shown when the API cannot be reached) ──────────── */
-
   function getCache(place) {
     var cache = read(KEYS.cache, {}) || {};
     var entry = cache[WW.utils.placeId(place)];
@@ -153,12 +137,10 @@ WW.store = (function () {
     var cache = read(KEYS.cache, {}) || {};
     cache[WW.utils.placeId(place)] = { savedAt: Date.now(), forecast: bundle.forecast, air: bundle.air || null };
 
-    // Keep only the five most recent places so storage never fills up.
     var ids = Object.keys(cache).sort(function (a, b) { return cache[b].savedAt - cache[a].savedAt; });
     ids.slice(5).forEach(function (id) { delete cache[id]; });
 
     if (!write(KEYS.cache, cache)) {
-      // Storage full: keep just this one entry.
       var only = {};
       only[WW.utils.placeId(place)] = cache[WW.utils.placeId(place)];
       write(KEYS.cache, only);

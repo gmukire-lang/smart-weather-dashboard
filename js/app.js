@@ -1,15 +1,3 @@
-/* ==========================================================================
-   Weatherwise: app controller
-   Owns the state, loads data, decides what to show when something fails,
-   and wires up every control on the page.
-
-   Failure strategy, in order:
-     1. Air quality fails        → forecast still shows; that card offers a retry.
-     2. Forecast fails, cached   → show the saved forecast with a clear "saved X ago" banner.
-     3. Forecast fails, on screen→ keep what is on screen, explain in a toast.
-     4. Nothing to show at all   → full-page message with "Try again".
-   ========================================================================== */
-
 WW.app = (function () {
   "use strict";
 
@@ -22,8 +10,8 @@ WW.app = (function () {
     air: null,
     airError: null,
     insights: null,
-    stale: null,          // { savedAt, error } when showing a saved forecast
-    selectedDay: null,    // "YYYY-MM-DD" or null for "next 24 hours"
+    stale: null,
+    selectedDay: null,
     metric: "temp",
     tableView: false,
     dailySort: "date",
@@ -31,11 +19,9 @@ WW.app = (function () {
   };
 
   var controller = null;
-  var failedPlace = null; // what "Try again" should reload
+  var failedPlace = null;
 
   function byId(id) { return document.getElementById(id); }
-
-  /* ── Loading states ─────────────────────────────────────────────────── */
 
   function setBusy(busy) {
     var dash = byId("dashboard");
@@ -75,7 +61,6 @@ WW.app = (function () {
     }
   }
 
-  /** A saved forecast was correct when it was fetched; move its "now" to the present. */
   function rehydrate(entry) {
     var f = entry.forecast;
     if (!f || !Array.isArray(f.hourly) || !Array.isArray(f.days)) return null;
@@ -83,13 +68,11 @@ WW.app = (function () {
     var hourStart = now - (now % 3600000);
     var nowIndex = f.hourly.findIndex(function (h) { return h.time >= hourStart; });
     var days = f.days.filter(function (d) { return d.time + DAY > now; });
-    if (nowIndex < 0 || !days.length || f.hourly.length - nowIndex < 6) return null; // too old to be useful
+    if (nowIndex < 0 || !days.length || f.hourly.length - nowIndex < 6) return null;
     f.nowIndex = nowIndex;
     f.days = days;
     return f;
   }
-
-  /* ── Loading a place ────────────────────────────────────────────────── */
 
   async function load(place, options) {
     options = options || {};
@@ -106,7 +89,7 @@ WW.app = (function () {
       api.getForecast(place, mine.signal),
       api.getAirQuality(place, mine.signal)
     ]);
-    if (mine !== controller) return; // a newer load has replaced this one
+    if (mine !== controller) return;
 
     var forecast = results[0], air = results[1];
 
@@ -127,7 +110,6 @@ WW.app = (function () {
       return;
     }
 
-    // ── The forecast failed ──
     var error = forecast.reason;
     setBusy(false);
     if (error && error.name === "AbortError") return;
@@ -146,7 +128,6 @@ WW.app = (function () {
     }
 
     if (state.forecast) {
-      // Keep what is on screen rather than replacing it with an error page.
       state.place = state.forecast.place;
       if (samePlace) {
         state.stale = { savedAt: state.forecast.fetchedAt, error: error };
@@ -182,8 +163,6 @@ WW.app = (function () {
     WW.render.all(state);
   }
 
-  /* ── Location ───────────────────────────────────────────────────────── */
-
   async function locate() {
     var button = byId("btn-locate");
     button.classList.add("is-busy");
@@ -195,13 +174,11 @@ WW.app = (function () {
       try {
         place = await api.reverseGeocode(pos.lat, pos.lon);
       } catch (e) {
-        // The name lookup failed, but we still have coordinates, carry on with those.
         place = { id: pos.lat.toFixed(2) + "," + pos.lon.toFixed(2), name: "My location", admin1: "", country: "", countryCode: "", lat: pos.lat, lon: pos.lon };
       }
       await load(place, { announce: true });
     } catch (geo) {
       if (geo && geo.geo && geo.geo !== "denied") {
-        // No precise fix available (e.g. plain-http page or no GPS): fall back to the approximate area.
         try {
           var rough = await api.approximateLocation();
           await load(rough);
@@ -217,8 +194,6 @@ WW.app = (function () {
       button.querySelector("i").className = "fa-solid fa-location-crosshairs";
     }
   }
-
-  /* ── Small state changes ────────────────────────────────────────────── */
 
   function selectDay(date) {
     state.selectedDay = date;
@@ -256,8 +231,6 @@ WW.app = (function () {
     WW.cities.refresh();
   }
 
-  /* ── Settings ───────────────────────────────────────────────────────── */
-
   function applyTheme() {
     var theme = store.settings.theme;
     if (theme === "auto") theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
@@ -282,11 +255,9 @@ WW.app = (function () {
     syncSettingsUi();
     if (key === "theme") applyTheme();
     if (key === "motion") WW.scene.setMotion(value === "on");
-    if (state.forecast) showDashboard();   // units / clock changed: re-render with the same data, no refetch
+    if (state.forecast) showDashboard();
     WW.cities.render();
   }
-
-  /* ── Wiring ─────────────────────────────────────────────────────────── */
 
   function bind() {
     byId("btn-refresh").addEventListener("click", function () { retry(); });
@@ -307,7 +278,7 @@ WW.app = (function () {
       else dialog.setAttribute("open", "");
     });
     dialog.addEventListener("click", function (e) {
-      if (e.target === dialog) return dialog.close();           // click on the backdrop
+      if (e.target === dialog) return dialog.close();
       var b = e.target.closest("[data-setting] button");
       if (b) changeSetting(b.closest("[data-setting]").dataset.setting, b.dataset.value);
     });
@@ -332,7 +303,6 @@ WW.app = (function () {
       if (chip) setDailyFilter(chip.dataset.filter);
     });
 
-    // Connection changes
     function syncOnline() { byId("offline-banner").hidden = navigator.onLine !== false; }
     window.addEventListener("offline", syncOnline);
     window.addEventListener("online", function () {
@@ -341,7 +311,6 @@ WW.app = (function () {
     });
     syncOnline();
 
-    // Keep things fresh: the clock every 30 s, the data every few minutes and when the tab returns.
     setInterval(function () {
       if (!state.forecast) return;
       WW.render.clock(state);
@@ -384,7 +353,6 @@ WW.app = (function () {
 
     WW.cities.refresh();
 
-    // Where to start: the last city viewed, else the visitor's approximate area, else a default.
     var place = store.getLast();
     if (!place) {
       try { place = await api.approximateLocation(); }
@@ -393,8 +361,6 @@ WW.app = (function () {
     load(place);
   }
 
-  // Scripts are loaded with "defer", so the DOM is already parsed here. Starting on the
-  // next tick lets this module finish defining WW.app before anything calls into it.
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else setTimeout(start, 0);
 

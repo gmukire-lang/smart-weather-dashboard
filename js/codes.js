@@ -1,14 +1,6 @@
-/* ==========================================================================
-   Weatherwise: WMO weather codes
-   Open-Meteo describes the sky with a WMO code (0–99). This table turns each
-   code into a label, a Font Awesome icon and a "group" used by the scenery
-   and by the filters.
-   ========================================================================== */
-
 WW.codes = (function () {
   "use strict";
 
-  // code: [label, day icon, night icon, group, intensity 1–3]
   var TABLE = {
     0: ["Clear sky", "fa-sun", "fa-moon", "clear", 0],
     1: ["Mostly clear", "fa-sun", "fa-moon", "clear", 0],
@@ -52,7 +44,6 @@ WW.codes = (function () {
     };
   }
 
-  /** Coarser grouping used by the "My cities" filter chips. */
   function bucket(code) {
     var group = describe(code).group;
     if (group === "clear") return "clear";

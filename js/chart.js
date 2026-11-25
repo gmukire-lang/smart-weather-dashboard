@@ -1,17 +1,10 @@
-/* ==========================================================================
-   Weatherwise: hourly chart
-   A small hand-written SVG chart (no chart library). One measure at a time,
-   one axis, a crosshair + tooltip on hover or arrow keys, and a table view
-   so every value is reachable without hovering.
-   ========================================================================== */
-
 WW.chart = (function () {
   "use strict";
 
   var U = WW.utils;
   var host, iconsEl, tooltipEl, svgEl, crossEl, dotEl;
-  var last = null;      // { hours, metric, nowFirst }
-  var layout = null;    // geometry of the current render
+  var last = null;
+  var layout = null;
   var active = -1;
 
   var METRICS = {
@@ -40,8 +33,6 @@ WW.chart = (function () {
     }
   };
 
-  /* ── Scales ─────────────────────────────────────────────────────────── */
-
   function niceScale(min, max, metric) {
     if (metric.domain) return { lo: metric.domain[0], hi: metric.domain[1], step: metric.step };
     if (metric.fromZero) min = 0;
@@ -56,7 +47,6 @@ WW.chart = (function () {
     return { lo: lo, hi: hi, step: step };
   }
 
-  /** Smooth line through the points (Catmull-Rom converted to cubic Béziers). */
   function smoothPath(points) {
     if (!points.length) return "";
     var d = "M" + points[0][0].toFixed(1) + "," + points[0][1].toFixed(1);
@@ -69,14 +59,11 @@ WW.chart = (function () {
     return d;
   }
 
-  /** A column with a rounded top and a square foot on the baseline. */
   function barPath(x, y, w, h) {
     var r = Math.min(4, w / 2, h);
     return "M" + x + "," + (y + h) + " V" + (y + r) + " Q" + x + "," + y + " " + (x + r) + "," + y +
       " H" + (x + w - r) + " Q" + (x + w) + "," + y + " " + (x + w) + "," + (y + r) + " V" + (y + h) + " Z";
   }
-
-  /* ── Render ─────────────────────────────────────────────────────────── */
 
   function render(options) {
     if (options) last = options;
@@ -98,7 +85,6 @@ WW.chart = (function () {
     U.clear(host);
     host.style.setProperty("--series", metric.color);
 
-    // Weather icons above the plot, on the same ticks as the hour labels.
     var every = band * 2 >= 46 ? 2 : band * 3 >= 46 ? 3 : band * 4 >= 46 ? 4 : 6;
     iconsEl = U.el("div", { class: "chart__icons", "aria-hidden": "true" });
     host.appendChild(iconsEl);
@@ -106,7 +92,6 @@ WW.chart = (function () {
     svgEl = U.svg("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": describe(hours, metric, values) });
     host.appendChild(svgEl);
 
-    // Night-time shading: a quiet band behind the hours when the sun is down.
     var run = null;
     hours.forEach(function (h, i) {
       if (!h.isDay && run == null) run = i;
@@ -119,7 +104,6 @@ WW.chart = (function () {
       }
     });
 
-    // Horizontal gridlines + y labels.
     for (var v = scale.lo; v <= scale.hi + 1e-9; v += scale.step) {
       var y = Math.round(yAt(v)) + 0.5;
       svgEl.appendChild(U.svg("line", { class: "chart__grid", x1: m.left, x2: W - m.right, y1: y, y2: y }));
@@ -127,7 +111,6 @@ WW.chart = (function () {
         (metric.tick || metric.format)(Math.round(v * 10) / 10)));
     }
 
-    // X labels + icons.
     hours.forEach(function (h, i) {
       if (i % every !== 0) return;
       var label = i === 0 && last.nowFirst ? "Now" : U.fmtHour(h.time);
@@ -137,7 +120,6 @@ WW.chart = (function () {
       iconsEl.appendChild(glyph);
     });
 
-    // The data.
     var points = values.map(function (val, i) { return [xAt(i), yAt(val)]; });
     if (metric.type === "line") {
       var line = smoothPath(points);
@@ -157,13 +139,11 @@ WW.chart = (function () {
       svgEl.appendChild(U.svg("text", { class: "chart__empty", x: m.left + innerW / 2, y: m.top + plotH / 2, "text-anchor": "middle" }, metric.empty));
     }
 
-    // Direct labels: only the extremes, never every point.
     var hi = values.indexOf(Math.max.apply(null, values));
     var lo = values.indexOf(Math.min.apply(null, values));
     labelPoint(hi, -10, true);
     if (metric.type === "line" && lo !== hi && values[lo] !== values[hi]) labelPoint(lo, 20, false);
 
-    // Crosshair + focus dot (moved on hover / arrow keys).
     crossEl = U.svg("line", { class: "chart__cross", y1: m.top, y2: m.top + plotH, visibility: "hidden" });
     dotEl = U.svg("circle", { class: "chart__dot", r: 5, visibility: "hidden" });
     svgEl.appendChild(crossEl);
@@ -178,7 +158,6 @@ WW.chart = (function () {
     var L = layout, value = L.values[i];
     if (L.metric.type === "bar" && value <= 0) return;
     var x = U.clamp(L.xAt(i), L.m.left + 16, L.W - L.m.right - 16);
-    // A label under a point that sits on the baseline would collide with the hour axis.
     if (dy > 0 && L.yAt(value) + dy > L.m.top + L.plotH - 6) dy = -10;
     if (L.metric.type === "line") {
       svgEl.appendChild(U.svg("circle", { class: "chart__dot", cx: L.xAt(i), cy: L.yAt(value), r: 4 }));
@@ -193,8 +172,6 @@ WW.chart = (function () {
     return metric.label + " for " + hours.length + " hours, from " + metric.format(lo) + " to " + metric.format(hi) +
       ". Highest at " + U.fmtHour(hours[values.indexOf(hi)].time) + ".";
   }
-
-  /* ── Interaction ────────────────────────────────────────────────────── */
 
   function row(name, value, color) {
     return U.el("div", { class: "tooltip__row" },
@@ -234,7 +211,6 @@ WW.chart = (function () {
       row("Wind", U.fmtWind(h.wind), "var(--c-wind)"),
       row("UV index", U.isNum(h.uv) ? String(Math.round(h.uv * 10) / 10) : "–", "var(--c-uv)"));
 
-    // Keep the tooltip inside the card: flip to the left of the crosshair when needed.
     var scaleX = host.clientWidth / L.W;
     var px = x * scaleX, tipW = tooltipEl.offsetWidth;
     var left = px + 14 + tipW > host.clientWidth ? px - 14 - tipW : px + 14;
@@ -286,8 +262,6 @@ WW.chart = (function () {
       }, 120)).observe(host);
     }
   }
-
-  /* ── Table view ─────────────────────────────────────────────────────── */
 
   function renderTable(wrap, hours, nowFirst) {
     var head = ["Time", "Conditions", "Temp", "Feels like", "Rain chance", "Rainfall", "Wind", "Humidity", "UV"];

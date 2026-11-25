@@ -1,11 +1,3 @@
-/* ==========================================================================
-   Weatherwise: insights
-   This is the "smart" in Smart Weather Dashboard: it reads the raw forecast
-   and answers the questions people actually have, do I need an umbrella,
-   when is the best time to go out, what should I wear, is the air OK?
-   Pure functions only: forecast in, plain objects out (no DOM here).
-   ========================================================================== */
-
 WW.insights = (function () {
   "use strict";
 
@@ -14,8 +6,6 @@ WW.insights = (function () {
   function n(value, fallback) { return U.isNum(value) ? value : (fallback || 0); }
   function avg(list) { return list.length ? list.reduce(function (a, b) { return a + b; }, 0) / list.length : 0; }
   function maxOf(list, pick) { return list.reduce(function (m, x) { return Math.max(m, n(pick(x))); }, 0); }
-
-  /* ── Scales ─────────────────────────────────────────────────────────── */
 
   var UV_LEVELS = [
     { upTo: 3, label: "Low", color: "var(--s-good)", advice: "No protection needed." },
@@ -37,7 +27,6 @@ WW.insights = (function () {
   function levelOf(levels, value) {
     var v = n(value);
     for (var i = 0; i < levels.length; i++) {
-      // "upTo" is inclusive for AQI (50 is still Good) and exclusive for UV (3 is Moderate).
       var inside = levels === AQI_LEVELS ? v <= levels[i].upTo : v < levels[i].upTo;
       if (inside) return Object.assign({ index: i }, levels[i]);
     }
@@ -53,8 +42,6 @@ WW.insights = (function () {
     if (score >= 35) return { label: "Fair", color: "var(--s-moderate)" };
     return { label: "Poor", color: "var(--s-high)" };
   }
-
-  /* ── Comfort scoring (0–100 for one hour) ───────────────────────────── */
 
   function comfort(hour, ideal, weights) {
     var feels = n(hour.feels, hour.temp);
@@ -75,8 +62,6 @@ WW.insights = (function () {
   function bestHours(scores, take) {
     return avg(scores.slice().sort(function (a, b) { return b - a; }).slice(0, take));
   }
-
-  /* ── Individual insights ────────────────────────────────────────────── */
 
   function rainInsight(f, next12) {
     var now = WW.codes.describe(f.current.code);
@@ -210,8 +195,6 @@ WW.insights = (function () {
     return out;
   }
 
-  /* ── Activities ─────────────────────────────────────────────────────── */
-
   function activities(f, air) {
     var next12 = f.hourly.slice(f.nowIndex, f.nowIndex + 12);
     var next24 = f.hourly.slice(f.nowIndex, f.nowIndex + 24);
@@ -246,8 +229,6 @@ WW.insights = (function () {
       return a;
     });
   }
-
-  /* ── Public: build everything for one forecast ──────────────────────── */
 
   function build(f, air) {
     var next12 = f.hourly.slice(f.nowIndex, f.nowIndex + 12);

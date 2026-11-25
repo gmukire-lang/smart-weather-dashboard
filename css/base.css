@@ -1,7 +1,3 @@
-/* ==========================================================================
-   Weatherwise: base: fonts, design tokens, reset, typography, utilities
-   ========================================================================== */
-
 @font-face {
   font-family: "Instrument Sans";
   src: url("../assets/fonts/instrument-sans-latin-var.woff2") format("woff2");
@@ -18,12 +14,9 @@
   font-display: swap;
 }
 
-/* ── Tokens ─────────────────────────────────────────────────────────────── */
-
 :root {
   color-scheme: light;
 
-  /* Paper + ink: warm neutrals, one confident accent */
   --bg: #f3eee4;
   --surface: #fbf8f2;
   --surface-2: #efe9dc;
@@ -35,17 +28,15 @@
   --line-strong: rgba(28, 27, 24, 0.24);
 
   --accent: #e8542f;
-  --accent-ink: #b93a18;      /* accent dark enough for text on paper */
+  --accent-ink: #b93a18;
   --accent-wash: #fbe3d8;
   --on-accent: #1c1b18;
 
-  /* One colour per measure, used consistently in charts, tiles and icons */
   --c-temp: #e8542f;
   --c-rain: #0e8f7e;
   --c-uv: #b07a00;
   --c-wind: #a8456b;
 
-  /* Status scale (always paired with a word, never colour alone) */
   --s-good: #4f8a5b;
   --s-moderate: #c99a1e;
   --s-elevated: #dd7a2a;
@@ -101,8 +92,6 @@
   --shadow-pop: 0 18px 40px -18px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
-/* ── Reset ──────────────────────────────────────────────────────────────── */
-
 *, *::before, *::after { box-sizing: border-box; }
 
 html {
@@ -142,8 +131,6 @@ table { border-collapse: collapse; width: 100%; }
 
 ::selection { background: var(--accent); color: var(--on-accent); }
 
-/* ── Utilities ──────────────────────────────────────────────────────────── */
-
 .visually-hidden {
   position: absolute !important;
   width: 1px; height: 1px;
@@ -177,8 +164,6 @@ table { border-collapse: collapse; width: 100%; }
 }
 
 .num { font-variant-numeric: tabular-nums; }
-
-/* ── Skeletons ──────────────────────────────────────────────────────────── */
 
 .skeleton {
   position: relative;

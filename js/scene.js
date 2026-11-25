@@ -1,11 +1,3 @@
-/* ==========================================================================
-   Weatherwise: scenery
-   Draws the landscape behind the current weather and keeps it in step with
-   the forecast: time of day, cloud cover, wind, rain, snow, fog and storms.
-   Colours live in css/scene.css; this file only decides *which* mood to show
-   and animates the rain / snow canvas.
-   ========================================================================== */
-
 WW.scene = (function () {
   "use strict";
 
@@ -17,9 +9,6 @@ WW.scene = (function () {
   var frame = null, lastTick = 0, flashTimer = null;
   var visible = true, motion = true, cloudKey = "";
 
-  /* ── One-off construction ───────────────────────────────────────────── */
-
-  // Hills are described once, in a 1200 × 320 box, as cubic Bézier segments.
   var HILLS = [
     { cls: "hill-1", start: [0, 150], segs: [[150, 70, 300, 60, 450, 120], [600, 180, 720, 60, 900, 75], [1040, 86, 1130, 140, 1200, 115]] },
     { cls: "hill-2", start: [0, 200], segs: [[180, 140, 330, 160, 500, 205], [680, 250, 800, 150, 980, 165], [1090, 174, 1160, 205, 1200, 195]] },
@@ -36,7 +25,6 @@ WW.scene = (function () {
     return d + " L1200,320 L0,320 Z";
   }
 
-  /** Height of a hill's ridge (0–320) at a horizontal position (0–1200). */
   function ridgeAt(hill, x) {
     var p0 = hill.start, best = p0[1], bestDist = Infinity;
     hill.segs.forEach(function (s) {
@@ -104,12 +92,10 @@ WW.scene = (function () {
       U.svg("circle", { cx: 146, cy: 48, r: 24 }));
   }
 
-  /* ── Clouds ─────────────────────────────────────────────────────────── */
-
   function setClouds(count, wind, lowOnly) {
     var speed = U.clamp(0.6 + (wind || 0) / 22, 0.6, 2.6);
     var key = count + "|" + Math.round(speed * 4) + "|" + lowOnly;
-    if (key === cloudKey) return; // nothing changed: let the existing clouds keep drifting
+    if (key === cloudKey) return;
     cloudKey = key;
 
     U.clear(cloudsEl);
@@ -130,8 +116,6 @@ WW.scene = (function () {
       cloudsEl.appendChild(cloud);
     }
   }
-
-  /* ── Rain / snow ────────────────────────────────────────────────────── */
 
   function resize() {
     var box = root.getBoundingClientRect();
@@ -221,7 +205,7 @@ WW.scene = (function () {
       if (!frame) { lastTick = performance.now(); frame = requestAnimationFrame(tick); }
     } else {
       if (frame) { cancelAnimationFrame(frame); frame = null; }
-      if (ctx) draw(0); // leave one still frame so rain is still shown without motion
+      if (ctx) draw(0);
     }
     syncLightning();
   }
@@ -232,7 +216,7 @@ WW.scene = (function () {
       (function schedule() {
         flashTimer = setTimeout(function () {
           flashEl.classList.remove("is-on");
-          void flashEl.offsetWidth; // restart the CSS animation
+          void flashEl.offsetWidth;
           flashEl.classList.add("is-on");
           schedule();
         }, 4500 + Math.random() * 6500);
@@ -243,8 +227,6 @@ WW.scene = (function () {
       flashEl.classList.remove("is-on");
     }
   }
-
-  /* ── Mood: forecast → what the scene shows ──────────────────────────── */
 
   function sunProgress(f) {
     var now = f.current.time, today = f.days[0];
@@ -285,7 +267,6 @@ WW.scene = (function () {
     card.style.setProperty("--now-ink", dark ? "#f6f1e6" : "#1c1b18");
     card.style.setProperty("--now-ink-2", dark ? "rgba(246, 241, 230, 0.78)" : "rgba(28, 27, 24, 0.74)");
 
-    // Sun / moon travel along an arc on the right-hand side of the scene.
     var p = sunProgress(f);
     orbEl.style.left = (50 + p * 44).toFixed(1) + "%";
     orbEl.style.top = (60 - Math.sin(Math.PI * p) * 34).toFixed(1) + "%";
@@ -334,7 +315,6 @@ WW.scene = (function () {
     else window.addEventListener("resize", resize);
     resize();
 
-    // Don't burn battery animating something nobody can see.
     if ("IntersectionObserver" in window) {
       new IntersectionObserver(function (entries) {
         visible = entries[0].isIntersecting;

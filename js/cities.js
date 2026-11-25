@@ -1,15 +1,9 @@
-/* ==========================================================================
-   Weatherwise: "My cities"
-   A comparison board for saved places. All cities are fetched in a single
-   API request, then sorted, filtered and searched entirely in the browser.
-   ========================================================================== */
-
 WW.cities = (function () {
   "use strict";
 
   var U = WW.utils, el = U.el, icon = U.icon;
   var view = { sort: "added", filter: "all", query: "" };
-  var snapshot = {};      // placeId → current readings
+  var snapshot = {};
   var error = null;
   var loading = false;
   var controller = null;
@@ -28,8 +22,6 @@ WW.cities = (function () {
   };
 
   function body() { return document.getElementById("cities-body"); }
-
-  /* ── Data ───────────────────────────────────────────────────────────── */
 
   async function refresh() {
     var places = WW.store.getCities();
@@ -71,8 +63,6 @@ WW.cities = (function () {
       }
     });
   }
-
-  /* ── Render ─────────────────────────────────────────────────────────── */
 
   function card(item, rank) {
     var place = item.place, data = item.data;
@@ -127,7 +117,6 @@ WW.cities = (function () {
     var places = WW.store.getCities();
     var items = places.map(function (place) { return { place: place, data: snapshot[place.id] || null }; });
 
-    // Filter chips show how many cities each one would match.
     U.$$("#cities-filter .chip").forEach(function (chip) {
       var key = chip.dataset.filter;
       chip.setAttribute("aria-pressed", key === view.filter ? "true" : "false");
@@ -159,7 +148,7 @@ WW.cities = (function () {
     var sorter = SORTS[view.sort];
     if (sorter.compare) {
       shown.sort(function (a, b) {
-        if (sorter.key) { // cities without a reading always go last
+        if (sorter.key) {
           if (!a.data || !b.data) return (a.data ? 0 : 1) - (b.data ? 0 : 1);
         }
         return sorter.compare(a, b);

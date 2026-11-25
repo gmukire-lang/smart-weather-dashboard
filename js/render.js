@@ -1,10 +1,3 @@
-/* ==========================================================================
-   Weatherwise: rendering
-   Turns the app state into DOM: the "now" panel, the smart brief, condition
-   tiles, the hourly chart, the daily list (sort + filter) and air quality.
-   Everything here is a pure "state in → DOM out" function.
-   ========================================================================== */
-
 WW.render = (function () {
   "use strict";
 
@@ -12,8 +5,6 @@ WW.render = (function () {
   var HOUR = 3600000, DAY = 86400000;
 
   function byId(id) { return document.getElementById(id); }
-
-  /* ── Now panel ──────────────────────────────────────────────────────── */
 
   function clock(state) {
     var f = state.forecast;
@@ -51,8 +42,6 @@ WW.render = (function () {
     U.fill(button, icon("fa-star", saved ? "solid" : "regular"), el("span", { text: saved ? "Saved" : "Save city" }));
   }
 
-  /* ── Smart brief ────────────────────────────────────────────────────── */
-
   function brief(state) {
     U.fill(byId("brief-list"), state.insights.items.map(function (item) {
       return el("li", { class: "brief__item", data: { tone: item.tone } },
@@ -72,9 +61,6 @@ WW.render = (function () {
     }));
   }
 
-  /* ── Hourly ─────────────────────────────────────────────────────────── */
-
-  /** The 24 hours the chart should show: the next 24 from now, or one chosen day. */
   function chartHours(state) {
     var f = state.forecast;
     if (state.selectedDay) {
@@ -113,8 +99,6 @@ WW.render = (function () {
     else WW.chart.render({ hours: view.hours, metric: state.metric, nowFirst: view.nowFirst });
   }
 
-  /* ── Condition tiles ────────────────────────────────────────────────── */
-
   function tile(t) {
     return el("article", { class: "tile", style: t.color ? { "--tile-color": t.color } : null },
       el("header", { class: "tile__head" },
@@ -145,7 +129,6 @@ WW.render = (function () {
         x1: 32 + Math.sin(rad) * 24, y1: 32 - Math.cos(rad) * 24, x2: 32 + Math.sin(rad) * 28, y2: 32 - Math.cos(rad) * 28
       }));
     });
-    // The arrow points the way the wind is blowing *towards*.
     var arrow = U.svg("path", { class: "compass__arrow", d: "M32 14 39 34h-5v14h-4V34h-5Z" });
     arrow.style.transform = "rotate(" + ((U.isNum(direction) ? direction : 0) + 180) + "deg)";
     dial.appendChild(arrow);
@@ -188,7 +171,6 @@ WW.render = (function () {
     var next24 = f.hourly.slice(f.nowIndex, f.nowIndex + 24);
     var out = [];
 
-    // Wind
     var w = c.wind || 0;
     var windWord = w < 6 ? "Calm" : w < 20 ? "Light breeze" : w < 39 ? "Moderate breeze" : w < 62 ? "Strong wind" : w < 89 ? "Gale" : "Storm force";
     out.push(tile({
@@ -197,7 +179,6 @@ WW.render = (function () {
       note: "From the " + U.compassLong(c.windDir) + " (" + U.compass(c.windDir) + ") · gusts " + U.fmtWind(c.gust)
     }));
 
-    // Rain
     var nextRain = next24.find(function (h) { return U.isNum(h.pop) && h.pop >= 50; });
     out.push(tile({
       icon: "fa-cloud-rain", label: "Rain today", color: "var(--c-rain)",
@@ -208,7 +189,6 @@ WW.render = (function () {
         : "Next 12 hours shown · no rain expected"
     }));
 
-    // UV
     var uvNow = U.isNum(hourNow.uv) ? hourNow.uv : 0;
     var uv = WW.insights.uvLevel(uvNow);
     out.push(tile({
@@ -219,7 +199,6 @@ WW.render = (function () {
       note: uv.advice + (U.isNum(today.uvMax) ? " Peak today: " + Math.round(today.uvMax) + "." : "")
     }));
 
-    // Humidity
     var dew = hourNow.dew;
     var dewWord = !U.isNum(dew) ? "" : dew < 10 ? "the air feels dry" : dew < 16 ? "comfortable" : dew < 21 ? "a little humid" : "muggy";
     out.push(tile({
@@ -229,7 +208,6 @@ WW.render = (function () {
       note: U.isNum(dew) ? "Dew point " + U.fmtTemp(dew) + ", " + dewWord : "Relative humidity right now"
     }));
 
-    // Sun
     var isDay = c.isDay, now = c.time;
     var progress = (now - today.sunrise) / (today.sunset - today.sunrise);
     var nextEvent, nextLabel;
@@ -246,7 +224,6 @@ WW.render = (function () {
       note: U.fmtDuration(today.sunset - today.sunrise) + " of daylight · " + nextLabel + " in " + U.fmtDuration(Math.max(0, nextEvent - now))
     }));
 
-    // Pressure
     var before = f.hourly[f.nowIndex - 3];
     var change = before && U.isNum(before.pressure) && U.isNum(c.pressure) ? c.pressure - before.pressure : 0;
     var trend = change > 1 ? ["fa-arrow-trend-up", "Rising", "Rising pressure usually means the weather is settling."]
@@ -259,7 +236,6 @@ WW.render = (function () {
       note: trend[2]
     }));
 
-    // Visibility
     var vis = hourNow.visibility;
     var visWord = !U.isNum(vis) ? "" : vis >= 10000 ? "Clear view" : vis >= 4000 ? "Good" : vis >= 1000 ? "Hazy" : "Poor";
     var visText = U.fmtDistance(vis).split(" ");
@@ -270,7 +246,6 @@ WW.render = (function () {
         : vis >= 4000 ? "Fine for driving and walking." : vis >= 1000 ? "Haze or mist, take care on the roads." : "Fog, drive slowly with lights on."
     }));
 
-    // Cloud cover
     var cloud = U.isNum(c.cloud) ? c.cloud : 0;
     var cloudWord = cloud < 12 ? "Clear skies" : cloud < 40 ? "Mostly clear" : cloud < 70 ? "Partly cloudy" : cloud < 90 ? "Mostly cloudy" : "Overcast";
     out.push(tile({
@@ -283,8 +258,6 @@ WW.render = (function () {
     U.fill(byId("tiles"), out);
     byId("conditions-sub").textContent = "Measured at " + U.fmtTime(c.time) + " local time";
   }
-
-  /* ── Daily forecast: sort + filter ──────────────────────────────────── */
 
   var DAY_SORTS = {
     date: { label: "date", compare: function (a, b) { return a.time - b.time; } },
@@ -316,7 +289,6 @@ WW.render = (function () {
       count.textContent = String(days.filter(DAY_FILTERS[key].test).length);
     });
 
-    // The range bars share one scale across the whole forecast so days are comparable.
     var lo = Math.min.apply(null, days.map(function (d) { return d.min; }));
     var hi = Math.max.apply(null, days.map(function (d) { return d.max; }));
     var span = Math.max(1, hi - lo);
@@ -366,9 +338,6 @@ WW.render = (function () {
       "Showing " + shown.length + " of " + days.length + " days" + (state.dailySort !== "date" ? ", " + sort.label : "") + "."));
   }
 
-  /* ── Air quality ────────────────────────────────────────────────────── */
-
-  // WHO 2021 guideline levels (µg/m³), used only to give each bar a reference point.
   var POLLUTANTS = [
     { key: "pm25", name: "PM2.5", guide: 15 },
     { key: "pm10", name: "PM10", guide: 45 },
@@ -424,8 +393,6 @@ WW.render = (function () {
       })),
       el("p", { class: "air__foot", text: "The mark on each bar is the WHO guideline level for that pollutant." }));
   }
-
-  /* ── Everything ─────────────────────────────────────────────────────── */
 
   function footer(state) {
     var f = state.forecast;

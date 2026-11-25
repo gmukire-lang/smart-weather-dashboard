@@ -1,13 +1,4 @@
-/* ==========================================================================
-   Weatherwise: the scenery
-   A flat, poster-style landscape that follows the real sky: the sun and moon
-   travel between actual sunrise and sunset, clouds match cloud cover, and
-   rain / snow / fog / lightning appear when the forecast says so.
-   Every "mood" is just a small palette of flat colours, no gradients.
-   ========================================================================== */
-
 .scene {
-  /* default mood = clear-day */
   --sky: #f6d99b;
   --orb: #e8542f;
   --orb-shade: #e8542f;
@@ -31,8 +22,6 @@
   container-type: inline-size;
   border-radius: inherit;
 }
-
-/* ── Moods ──────────────────────────────────────────────────────────────── */
 
 .scene[data-mood="overcast-day"] {
   --sky: #d9d4c5; --cloud: #f1ede3; --bank: #bdb8a9;
@@ -94,8 +83,6 @@
   --scene-ink: #f6f1e6; --scene-ink-2: rgba(246, 241, 230, 0.76);
 }
 
-/* ── Sun / moon ─────────────────────────────────────────────────────────── */
-
 .scene__orb {
   position: absolute;
   left: 78%;
@@ -139,8 +126,6 @@
 }
 @keyframes rays-turn { to { transform: rotate(360deg); } }
 
-/* ── Stars ──────────────────────────────────────────────────────────────── */
-
 .scene__stars {
   position: absolute;
   inset: 0 0 38% 0;
@@ -162,8 +147,6 @@
   50% { opacity: 0.25; }
 }
 
-/* ── Clouds ─────────────────────────────────────────────────────────────── */
-
 .scene__clouds { position: absolute; inset: 0; }
 
 .cloud {
@@ -184,7 +167,6 @@
   to { transform: translateX(100cqw); }
 }
 
-/* A solid cloud ceiling for overcast, rain, snow and storms */
 .scene__bank {
   position: absolute;
   left: -6%; right: -6%;
@@ -202,8 +184,6 @@
   from { transform: translateX(-2.5%); }
   to { transform: translateX(2.5%); }
 }
-
-/* ── Land ───────────────────────────────────────────────────────────────── */
 
 .scene__land {
   position: absolute;
@@ -232,8 +212,6 @@
   to { transform: translate(-50%, 6%) rotate(var(--lean, 1deg)); }
 }
 
-/* ── Fog ────────────────────────────────────────────────────────────────── */
-
 .scene__fog {
   position: absolute;
   inset: 0;
@@ -260,8 +238,6 @@
   to { transform: translateX(14%); }
 }
 
-/* ── Rain / snow canvas + lightning ─────────────────────────────────────── */
-
 .scene__precip {
   position: absolute;
   inset: 0;
@@ -287,8 +263,6 @@
   28% { opacity: 0.28; }
   100% { opacity: 0; }
 }
-
-/* ── Motion off (user setting or prefers-reduced-motion) ────────────────── */
 
 .scene.is-still *,
 .scene.is-still *::before,

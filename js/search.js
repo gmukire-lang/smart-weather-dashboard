@@ -1,21 +1,12 @@
-/* ==========================================================================
-   Weatherwise: city search
-   An accessible autocomplete (ARIA combobox): type to search, arrow keys to
-   move, Enter to choose, Escape to close. Shows recent searches when empty,
-   and has clear states for loading, no results and a failed search.
-   ========================================================================== */
-
 WW.search = (function () {
   "use strict";
 
   var U = WW.utils;
   var wrap, input, panel, listEl, statusEl, clearBtn;
-  var options = [];       // [{ node, run }] in the order shown
+  var options = [];
   var activeIndex = -1;
-  var controller = null;  // lets us cancel a search that is no longer wanted
+  var controller = null;
   var handlers = {};
-
-  /* ── Panel ──────────────────────────────────────────────────────────── */
 
   function open() {
     panel.hidden = false;
@@ -49,7 +40,6 @@ WW.search = (function () {
     U.clear(listEl);
   }
 
-  /** Bold the part of the name that matches what was typed. */
   function highlight(name, query) {
     var at = query ? name.toLowerCase().indexOf(query.toLowerCase()) : -1;
     if (at < 0) return [name];
@@ -90,8 +80,6 @@ WW.search = (function () {
     listEl.appendChild(box);
   }
 
-  /* ── States ─────────────────────────────────────────────────────────── */
-
   function showIdle() {
     var recent = WW.store.getRecent();
     reset(recent.length ? "Recent searches" : "");
@@ -117,7 +105,7 @@ WW.search = (function () {
 
     try {
       var results = await WW.api.searchCities(query, mine.signal);
-      if (mine !== controller) return; // a newer search has started
+      if (mine !== controller) return;
       if (!wrap.contains(document.activeElement)) return close();
 
       if (!results.length) {
@@ -149,7 +137,7 @@ WW.search = (function () {
     syncClearButton();
 
     if (controller) { controller.abort(); controller = null; }
-    if (!wrap.contains(document.activeElement)) return close(); // focus moved on while we were waiting
+    if (!wrap.contains(document.activeElement)) return close();
     if (!query) return showIdle();
     if (query.length < 2) {
       reset("");
@@ -173,8 +161,6 @@ WW.search = (function () {
     WW.store.addRecent(place);
     if (handlers.onSelect) handlers.onSelect(place);
   }
-
-  /* ── Wiring ─────────────────────────────────────────────────────────── */
 
   function onKeydown(event) {
     if (event.key === "ArrowDown") {
@@ -212,12 +198,10 @@ WW.search = (function () {
     input.addEventListener("focus", function () { if (panel.hidden) { if (input.value.trim()) onInput(); else showIdle(); } });
     clearBtn.addEventListener("click", function () { input.value = ""; onInput(); input.focus(); });
 
-    // Clicking a suggestion must not blur the input before the click lands.
     panel.addEventListener("pointerdown", function (e) { if (e.target.tagName !== "BUTTON") e.preventDefault(); });
     document.addEventListener("pointerdown", function (e) { if (!wrap.contains(e.target)) close(); });
     wrap.addEventListener("focusout", function (e) { if (e.relatedTarget && !wrap.contains(e.relatedTarget)) close(); });
 
-    // Press "/" anywhere to jump to search.
     document.addEventListener("keydown", function (e) {
       var typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || "")) || e.target.isContentEditable;
       if (e.key === "/" && !typing && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); focus(); }

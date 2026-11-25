@@ -1,11 +1,5 @@
-/* ==========================================================================
-   Weatherwise: utilities: DOM builders, unit conversion, time formatting
-   ========================================================================== */
-
 WW.utils = (function () {
   "use strict";
-
-  /* ── DOM ────────────────────────────────────────────────────────────── */
 
   function applyAttrs(node, attrs) {
     if (!attrs) return;
@@ -29,7 +23,6 @@ WW.utils = (function () {
     });
   }
 
-  /** Build an element. Text always goes in as text nodes, so API data can never inject HTML. */
   function el(tag, attrs) {
     var node = document.createElement(tag);
     applyAttrs(node, attrs);
@@ -44,7 +37,6 @@ WW.utils = (function () {
     return node;
   }
 
-  /** A decorative Font Awesome icon, e.g. icon("fa-sun") or icon("fa-star", "regular"). */
   function icon(name, family) {
     return el("i", { class: "fa-" + (family || "solid") + " " + name, "aria-hidden": "true" });
   }
@@ -63,8 +55,6 @@ WW.utils = (function () {
   function $(selector, root) { return (root || document).querySelector(selector); }
   function $$(selector, root) { return Array.prototype.slice.call((root || document).querySelectorAll(selector)); }
 
-  /* ── Small helpers ──────────────────────────────────────────────────── */
-
   function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
   function isNum(value) { return typeof value === "number" && isFinite(value); }
 
@@ -77,7 +67,6 @@ WW.utils = (function () {
     };
   }
 
-  /** Small deterministic random generator so the scenery looks the same on every render. */
   function seeded(seed) {
     var s = seed >>> 0;
     return function () {
@@ -92,8 +81,6 @@ WW.utils = (function () {
     return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
 
-  /* ── Units (the API always returns metric; we convert for display) ──── */
-
   function settings() { return WW.store.settings; }
 
   function tempValue(c) {
@@ -105,7 +92,6 @@ WW.utils = (function () {
     return v == null ? "–" : (Object.is(v, -0) ? 0 : v) + "°";
   }
   function tempUnit() { return settings().temp === "f" ? "°F" : "°C"; }
-  /** A temperature difference (not an absolute temperature). */
   function tempDelta(c) {
     return Math.round(settings().temp === "f" ? c * 9 / 5 : c);
   }
@@ -153,18 +139,11 @@ WW.utils = (function () {
     return COMPASS_LONG[eight];
   }
 
-  /* ── Time ───────────────────────────────────────────────────────────────
-     Open-Meteo returns local wall-clock times for the *city* ("2026-11-25T14:00"),
-     not for the visitor's computer. We parse them as if they were UTC and only
-     ever read them back with getUTC*(), so a visitor in Kigali looking at Tokyo
-     always sees Tokyo's clock. */
-
   function toMs(iso) {
     if (!iso) return NaN;
     return Date.parse(iso.length <= 10 ? iso + "T00:00:00Z" : iso.length === 16 ? iso + ":00Z" : iso + "Z");
   }
 
-  /** The current wall-clock time in a place, given its UTC offset in seconds. */
   function nowAt(utcOffsetSeconds) {
     return Date.now() + (utcOffsetSeconds || 0) * 1000;
   }
@@ -180,7 +159,6 @@ WW.utils = (function () {
     return pad(h) + ":" + pad(m);
   }
 
-  /** Short hour label for axes and lists: "14:00" or "2 pm". */
   function fmtHour(ms) {
     if (!isNum(ms)) return "–";
     var h = new Date(ms).getUTCHours();
@@ -217,8 +195,6 @@ WW.utils = (function () {
     return days + (days === 1 ? " day ago" : " days ago");
   }
 
-  /* ── Places ─────────────────────────────────────────────────────────── */
-
   function placeId(place) {
     return String(place.id != null ? place.id : place.lat.toFixed(2) + "," + place.lon.toFixed(2));
   }
@@ -228,8 +204,6 @@ WW.utils = (function () {
     if (place.country) parts.push(place.country);
     return parts.join(", ");
   }
-
-  /* ── Toasts ─────────────────────────────────────────────────────────── */
 
   function toast(message, options) {
     options = options || {};
@@ -257,7 +231,6 @@ WW.utils = (function () {
     }
     node.appendChild(el("button", { class: "toast__close", type: "button", "aria-label": "Dismiss", on: { click: dismiss } }, icon("fa-xmark")));
 
-    // Keep at most three on screen.
     while (host.children.length >= 3) host.removeChild(host.firstChild);
     host.appendChild(node);
     setTimeout(dismiss, options.duration || (type === "error" ? 7000 : 4500));
