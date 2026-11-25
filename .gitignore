@@ -1,0 +1,19 @@
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Never commit secrets (this project needs none, but keep the habit)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs and scratch files
+*.log
+node_modules/
+
+# Local helper scripts (never committed)
+*.local.sh
