@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 360" role="img" aria-label="Weatherwise: when is the best time to do it?">
+  <defs>
+    <clipPath id="card"><rect width="1280" height="360" rx="28"/></clipPath>
+    <g id="cloud">
+      <rect x="18" y="46" width="164" height="36" rx="18"/>
+      <circle cx="62" cy="46" r="26"/><circle cx="104" cy="34" r="34"/><circle cx="146" cy="48" r="24"/>
+    </g>
+    <path id="tree" d="M10 0 17 12h-3.5L19 22h-7.5v8h-3v-8H1l5.500-10H3Z"/>
+  </defs>
+
+  <g clip-path="url(#card)">
+    <!-- sky -->
+    <rect width="1280" height="360" fill="#f6d99b"/>
+
+    <!-- sun with flat halo rings -->
+    <circle cx="1010" cy="118" r="118" fill="#e8542f" opacity="0.14"/>
+    <circle cx="1010" cy="118" r="82" fill="#e8542f" opacity="0.16"/>
+    <circle cx="1010" cy="118" r="62" fill="none" stroke="#e8542f" stroke-width="3" stroke-dasharray="7 7" opacity="0.6"/>
+    <circle cx="1010" cy="118" r="46" fill="#e8542f"/>
+
+    <!-- clouds -->
+    <use href="#cloud" fill="#fdf6e3" transform="translate(1060 150) scale(0.95)"/>
+    <use href="#cloud" fill="#fdf6e3" opacity="0.75" transform="translate(690 40) scale(0.55)"/>
+    <use href="#cloud" fill="#fdf6e3" opacity="0.75" transform="translate(820 205) scale(0.42)"/>
+
+    <!-- hills -->
+    <path fill="#8fae7a" d="M0,262 C160,254 330,256 500,252 C660,248 770,180 960,192 C1110,200 1200,240 1280,222 L1280,360 L0,360 Z"/>
+    <path fill="#5b8a5e" d="M0,290 C190,245 350,260 530,292 C720,326 850,252 1045,263 C1160,270 1235,292 1280,286 L1280,360 L0,360 Z"/>
+    <g fill="#2f5d44">
+      <use href="#tree" transform="translate(1085 232) scale(1.1)"/>
+      <use href="#tree" transform="translate(1118 226) scale(1.4)"/>
+      <use href="#tree" transform="translate(905 240) scale(1)"/>
+    </g>
+    <path fill="#2f5d44" d="M0,328 C210,296 400,312 600,330 C810,348 960,304 1280,322 L1280,360 L0,360 Z"/>
+    <g fill="#1f4433">
+      <use href="#tree" transform="translate(960 278) scale(1.6)"/>
+      <use href="#tree" transform="translate(1000 284) scale(1.2)"/>
+      <use href="#tree" transform="translate(1195 268) scale(1.9)"/>
+      <use href="#tree" transform="translate(770 296) scale(1.3)"/>
+    </g>
+
+    <!-- wordmark -->
+    <rect x="72" y="70" width="60" height="60" rx="18" fill="#e8542f"/>
+    <circle cx="102" cy="100" r="11" fill="#1c1b18"/>
+    <g stroke="#1c1b18" stroke-width="4" stroke-linecap="round">
+      <path d="M102 78v6M102 116v6M80 100h6M118 100h6M86.400 84.400l4.300 4.300M113.300 111.300l4.300 4.300M86.400 115.600l4.300-4.300M113.300 88.700l4.300-4.300"/>
+    </g>
+    <text x="150" y="118" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="46" font-weight="800" letter-spacing="-1.500" fill="#1c1b18">Weatherwise</text>
+    <text x="72" y="196" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="40" font-weight="700" letter-spacing="-1" fill="#1c1b18">When is the best time to do it?</text>
+    <text x="72" y="236" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="21" font-weight="500" fill="#1c1b18" opacity="0.78">A smart weather dashboard and outdoor activity planner</text>
+
+    <!-- answer pill -->
+    <rect x="72" y="268" width="452" height="50" rx="25" fill="#fbf8f2"/>
+    <circle cx="100" cy="293" r="9" fill="#4f8a5b"/>
+    <text x="120" y="300" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="19" font-weight="600" fill="#1c1b18">Best time this week: Monday, 12:00 to 14:00</text>
+  </g>
+</svg>
