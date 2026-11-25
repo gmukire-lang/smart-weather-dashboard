@@ -1,0 +1,296 @@
+/* ==========================================================================
+   Weatherwise: the scenery
+   A flat, poster-style landscape that follows the real sky: the sun and moon
+   travel between actual sunrise and sunset, clouds match cloud cover, and
+   rain / snow / fog / lightning appear when the forecast says so.
+   Every "mood" is just a small palette of flat colours, no gradients.
+   ========================================================================== */
+
+.scene {
+  /* default mood = clear-day */
+  --sky: #f6d99b;
+  --orb: #e8542f;
+  --orb-shade: #e8542f;
+  --halo: rgba(232, 84, 47, 0.16);
+  --cloud: #fdf6e3;
+  --bank: #e9dfc4;
+  --hill-1: #8fae7a;
+  --hill-2: #5b8a5e;
+  --hill-3: #2f5d44;
+  --tree: #1f4433;
+  --particle: rgba(251, 248, 242, 0.8);
+  --fog: rgba(251, 248, 242, 0.55);
+  --scene-ink: #1c1b18;
+  --scene-ink-2: rgba(28, 27, 24, 0.74);
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--sky);
+  transition: background-color 1.2s ease;
+  container-type: inline-size;
+  border-radius: inherit;
+}
+
+/* ── Moods ──────────────────────────────────────────────────────────────── */
+
+.scene[data-mood="overcast-day"] {
+  --sky: #d9d4c5; --cloud: #f1ede3; --bank: #bdb8a9;
+  --hill-1: #94a08c; --hill-2: #6b7f6c; --hill-3: #44594b; --tree: #2e4136;
+}
+.scene[data-mood="rain-day"] {
+  --sky: #a7b0a6; --cloud: #cfd4cb; --bank: #838d84;
+  --hill-1: #71836f; --hill-2: #4d6353; --hill-3: #30463a; --tree: #223329;
+  --particle: rgba(251, 248, 242, 0.78);
+}
+.scene[data-mood="snow-day"] {
+  --sky: #cdd5cf; --cloud: #f4f2ec; --bank: #b3bbb5;
+  --hill-1: #f7f5ef; --hill-2: #e8ebe4; --hill-3: #d8ded6; --tree: #3c5145;
+  --particle: #ffffff;
+}
+.scene[data-mood="fog-day"] {
+  --sky: #d6d3c8; --cloud: #e8e5db; --bank: #c6c3b7;
+  --hill-1: #bcbfb3; --hill-2: #a5aa9e; --hill-3: #8d9488; --tree: #7a8176;
+}
+.scene[data-mood="dusk"] {
+  --sky: #f2b184; --orb: #d93f22; --orb-shade: #d93f22; --halo: rgba(217, 63, 34, 0.18);
+  --cloud: #fbdcc0; --bank: #e09a70;
+  --hill-1: #b27457; --hill-2: #7d4f3f; --hill-3: #4a302a; --tree: #33211d;
+}
+.scene[data-mood="storm"] {
+  --sky: #4b504b; --cloud: #6a706a; --bank: #2f3430;
+  --hill-1: #3a463e; --hill-2: #2a352e; --hill-3: #1b241f; --tree: #121915;
+  --particle: rgba(251, 248, 242, 0.62);
+  --scene-ink: #f6f1e6; --scene-ink-2: rgba(246, 241, 230, 0.78);
+}
+.scene[data-mood="clear-night"] {
+  --sky: #1b2320; --orb: #f4ead0; --orb-shade: #1b2320; --halo: rgba(244, 234, 208, 0.07);
+  --cloud: #36403b; --bank: #2c3531;
+  --hill-1: #33413b; --hill-2: #26322d; --hill-3: #19211d; --tree: #0f1512;
+  --scene-ink: #f6f1e6; --scene-ink-2: rgba(246, 241, 230, 0.76);
+}
+.scene[data-mood="overcast-night"] {
+  --sky: #232927; --orb: #f4ead0; --orb-shade: #232927; --halo: rgba(244, 234, 208, 0.05);
+  --cloud: #3a433f; --bank: #2e3532;
+  --hill-1: #35403b; --hill-2: #28322e; --hill-3: #1a221f; --tree: #101613;
+  --scene-ink: #f6f1e6; --scene-ink-2: rgba(246, 241, 230, 0.76);
+}
+.scene[data-mood="rain-night"] {
+  --sky: #1f2624; --cloud: #39423e; --bank: #2b3330;
+  --hill-1: #333e39; --hill-2: #26302c; --hill-3: #19201d; --tree: #0e1412;
+  --particle: rgba(241, 236, 225, 0.5);
+  --scene-ink: #f6f1e6; --scene-ink-2: rgba(246, 241, 230, 0.76);
+}
+.scene[data-mood="snow-night"] {
+  --sky: #29302e; --cloud: #48524d; --bank: #353d3a;
+  --hill-1: #c9cfc9; --hill-2: #b3bbb4; --hill-3: #9da6a0; --tree: #1d2622;
+  --particle: #ffffff;
+  --scene-ink: #f6f1e6; --scene-ink-2: rgba(246, 241, 230, 0.76);
+}
+.scene[data-mood="fog-night"] {
+  --sky: #2b302e; --cloud: #3d4441; --bank: #353b38;
+  --hill-1: #3b423e; --hill-2: #343a37; --hill-3: #2c3230; --tree: #252a28;
+  --fog: rgba(241, 236, 225, 0.1);
+  --scene-ink: #f6f1e6; --scene-ink-2: rgba(246, 241, 230, 0.76);
+}
+
+/* ── Sun / moon ─────────────────────────────────────────────────────────── */
+
+.scene__orb {
+  position: absolute;
+  left: 78%;
+  top: 30%;
+  width: clamp(64px, 10cqw, 104px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  transition: left 1.6s var(--ease), top 1.6s var(--ease), opacity 0.8s ease;
+}
+.scene__disc,
+.scene__halo,
+.scene__rays {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+.scene__disc {
+  background: var(--orb);
+  box-shadow: inset -0.9em 0.35em 0 0 var(--orb-shade);
+  font-size: clamp(14px, 2.2cqw, 22px);
+  transition: background-color 1.2s ease, box-shadow 1.2s ease;
+}
+.scene__halo {
+  inset: -38%;
+  background: var(--halo);
+  box-shadow: 0 0 0 clamp(18px, 3.4cqw, 34px) var(--halo);
+  animation: halo-breathe 7s ease-in-out infinite;
+}
+.scene__rays {
+  inset: -22%;
+  border: 3px dashed var(--orb);
+  opacity: 0.55;
+  animation: rays-turn 80s linear infinite;
+}
+.scene[data-orb="moon"] .scene__rays { display: none; }
+.scene[data-orb="none"] .scene__orb { opacity: 0; }
+
+@keyframes halo-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+}
+@keyframes rays-turn { to { transform: rotate(360deg); } }
+
+/* ── Stars ──────────────────────────────────────────────────────────────── */
+
+.scene__stars {
+  position: absolute;
+  inset: 0 0 38% 0;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+.scene[data-stars="on"] .scene__stars { opacity: 1; }
+.scene__stars span {
+  position: absolute;
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: #f4ead0;
+  animation: twinkle 4s ease-in-out infinite;
+}
+.scene__stars span.is-big { width: 4px; height: 4px; }
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.25; }
+}
+
+/* ── Clouds ─────────────────────────────────────────────────────────────── */
+
+.scene__clouds { position: absolute; inset: 0; }
+
+.cloud {
+  position: absolute;
+  left: 0;
+  color: var(--cloud);
+  transform: translateX(-100%);
+  animation: cloud-drift var(--dur, 90s) linear infinite;
+  animation-delay: var(--delay, 0s);
+  transition: color 1.2s ease;
+  will-change: transform;
+}
+.cloud svg { width: 100%; height: auto; fill: currentColor; }
+.cloud--far { opacity: 0.7; }
+
+@keyframes cloud-drift {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100cqw); }
+}
+
+/* A solid cloud ceiling for overcast, rain, snow and storms */
+.scene__bank {
+  position: absolute;
+  left: -6%; right: -6%;
+  top: 0;
+  height: 30%;
+  color: var(--bank);
+  opacity: 0;
+  transform: translateY(-40%);
+  transition: opacity 1.2s ease, transform 1.2s var(--ease), color 1.2s ease;
+}
+.scene__bank svg { width: 100%; height: 100%; fill: currentColor; animation: bank-sway 26s ease-in-out infinite alternate; }
+.scene[data-bank="on"] .scene__bank { opacity: 1; transform: none; }
+
+@keyframes bank-sway {
+  from { transform: translateX(-2.5%); }
+  to { transform: translateX(2.5%); }
+}
+
+/* ── Land ───────────────────────────────────────────────────────────────── */
+
+.scene__land {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 38%;
+}
+.scene__land > .hill { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; }
+.scene__land path { transition: fill 1.2s ease; }
+.hill-1 { fill: var(--hill-1); }
+.hill-2 { fill: var(--hill-2); }
+.hill-3 { fill: var(--hill-3); }
+
+.tree {
+  position: absolute;
+  width: var(--size, 28px);
+  transform: translate(-50%, 6%);
+  transform-origin: 50% 100%;
+  fill: var(--tree);
+  transition: fill 1.2s ease;
+  animation: tree-sway var(--sway, 6s) ease-in-out infinite alternate;
+}
+.tree--far { fill: var(--hill-3); }
+
+@keyframes tree-sway {
+  from { transform: translate(-50%, 6%) rotate(calc(var(--lean, 1deg) * -1)); }
+  to { transform: translate(-50%, 6%) rotate(var(--lean, 1deg)); }
+}
+
+/* ── Fog ────────────────────────────────────────────────────────────────── */
+
+.scene__fog {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  pointer-events: none;
+}
+.scene[data-fog="on"] .scene__fog { opacity: 1; }
+.scene__fog span {
+  position: absolute;
+  left: -20%;
+  width: 90%;
+  height: 9%;
+  border-radius: 999px;
+  background: var(--fog);
+  animation: fog-slide 30s ease-in-out infinite alternate;
+}
+.scene__fog span:nth-child(1) { top: 46%; }
+.scene__fog span:nth-child(2) { top: 62%; left: 30%; width: 85%; animation-duration: 38s; animation-direction: alternate-reverse; }
+.scene__fog span:nth-child(3) { top: 78%; left: -5%; width: 110%; height: 12%; animation-duration: 46s; }
+
+@keyframes fog-slide {
+  from { transform: translateX(-8%); }
+  to { transform: translateX(14%); }
+}
+
+/* ── Rain / snow canvas + lightning ─────────────────────────────────────── */
+
+.scene__precip {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  pointer-events: none;
+}
+
+.scene__flash {
+  position: absolute;
+  inset: 0;
+  background: #f6f1e6;
+  opacity: 0;
+  pointer-events: none;
+}
+.scene__flash.is-on { animation: flash 0.7s ease-out 1; }
+
+@keyframes flash {
+  0% { opacity: 0; }
+  8% { opacity: 0.4; }
+  18% { opacity: 0.06; }
+  28% { opacity: 0.28; }
+  100% { opacity: 0; }
+}
+
+/* ── Motion off (user setting or prefers-reduced-motion) ────────────────── */
+
+.scene.is-still *,
+.scene.is-still *::before,
+.scene.is-still *::after { animation: none !important; }
+.scene.is-still .cloud { transform: translateX(var(--rest, 40cqw)); }
