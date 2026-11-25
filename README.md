@@ -35,7 +35,10 @@
 
 | | |
 | :-- | :-- |
-| **Live site** (through the load balancer) | `http://<LB01_IP_OR_DOMAIN>/` &nbsp; _fill in after deployment_ |
+| **Live site** (through the load balancer) | **<https://www.gracemukire.tech/>** |
+| Load balancer, direct (Lb01) | <http://35.179.171.101> |
+| Web server 1, direct (Web01) | <http://18.132.10.131> |
+| Web server 2, direct (Web02) | <http://13.43.219.124> |
 | **Demo video** | `<link>` &nbsp; _fill in_ |
 
 <br>
@@ -429,6 +432,14 @@ Replace these placeholders with your own values:
 | :-- | :-- |
 | `<WEB01_IP>` `<WEB02_IP>` `<LB01_IP>` | The three server addresses |
 | `<REPO_URL>` | The HTTPS URL of this GitHub repository |
+
+For the live deployment of this project those values are:
+
+| Server | Address | Role |
+| :-- | :-- | :-- |
+| Lb01 | `35.179.171.101` (also <https://www.gracemukire.tech/>) | HAProxy load balancer |
+| Web01 | `18.132.10.131` | Nginx and Express |
+| Web02 | `13.43.219.124` | Nginx and Express |
 
 ### Step 1: Web01 and Web02
 
